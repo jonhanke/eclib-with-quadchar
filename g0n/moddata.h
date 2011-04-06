@@ -51,8 +51,11 @@ protected:
  vector<long> invlist,noninvlist,noninvdlist,dstarts,gcdtable,unitdivlist;
  long code(long res) const {return invlist[reduce(res)];}
 public:
+	long chi_top, chi_modulus;      // This is the top number and conductor of the quadratic character.
+	vector<long> chi;     // This stores the values of the quadratic character!
   long nsymb;
- moddata(long n);                                //constructor
+ moddata(long n, long chi_d=1);                                //constructor
+ void init_quadchar(long chi_d);   // Initialize the quadratic character
  void display() const;
  void abort(const char* mess) const 
   {

@@ -145,7 +145,7 @@ symb symblist::item(long n) const
 }
 
 //Member functions for class symbdata:
-symbdata::symbdata(long n) :moddata(n),specials(nsymb2)
+symbdata::symbdata(long n, long char_top) :moddata(n, char_top),specials(nsymb2)
 {
   //   cout << "In constructor symbdata::symbdata.\n";
   //   cout << "nsymb2 = " << nsymb2 << "\n";
@@ -172,29 +172,117 @@ symbdata::symbdata(long n) :moddata(n),specials(nsymb2)
    //   cout << "Special symbols: "; specials.display();
  }
 }
- 
+
+
+
+
+
+
+// =================================================================================
+// This returns the index of the unique representative for pair (c,d) in P^1(Z/NZ)
+// in our distinguished list of representatives for these pairs.  There are three 
+// types of distinguished representatives to consider:
+//    1) Pairs (c:1) -- iff d is a unit mod N.
+//    2) Pairs (1:d) -- iff d is not a unit mod N, but c is.
+//    3) Pairs (c:d) -- iff neither c nor d is a unit modulo N (and always gcd(c,d)>1).
+//                          These are called "special symbols", and are stored explicitly.
+// =================================================================================
+
 long symbdata::index2(long c, long d) const
 { long kd = code(d);
-// cout<<"index2("<<c<<":"<<d<<"):"<<endl;
-  if (kd>0)                // d invertible, with inverse kd
-    return reduce(xmodmul(c,kd,modulus));   // (c:d) = (c*kd:1)
-  else
-  { long kc = code(c);
-    if (kc>0)              // (c:d) = (1:kc*d) if c invertible
-       return   modulus-code(xmodmul(kc,d,modulus));
-    else
-    {
-     long start = dstarts[noninvdlist[-kc]];
-     symb s(c,d,this);
-     long ind = specials.index(s,start);
-     if(ind<0) 
-       {
-	 cout<<"error in index(): symbol "<<s<<" not in list!"<<endl;
-       }
-     return nsymb1+ind;
-    }
-  }
+	// cout<<"index2("<<c<<":"<<d<<"):"<<endl;
+	if (kd>0)                // d invertible, with inverse kd
+		return reduce(xmodmul(c,kd,modulus));   // (c:d) = (c*kd:1)
+	else
+	{ long kc = code(c);
+		if (kc>0)              // (c:d) = (1:kc*d) if c invertible
+			return   modulus-code(xmodmul(kc,d,modulus));
+		else
+		{
+			long start = dstarts[noninvdlist[-kc]];
+			symb s(c,d,this);
+			long ind = specials.index(s,start);
+			if(ind<0) 
+			{
+				cout<<"error in index(): symbol "<<s<<" not in list!"<<endl;
+			}
+			return nsymb1+ind;
+		}
+	}
 }
+
+
+
+// =============================================================================
+// Similar to index2 above, but returns a vector whose first entry is the value
+// of index2 and whose second entry is the 1 or -1 that is chi(u) where u is 
+// the unit (mod N) that scales (c,d) to the distinguished representative.
+// =============================================================================
+
+vector<long> symbdata::index2_with_pm(long c, long d) const { 
+	vector<long> ans(2);   // This will hold the final tuple (index2, pm1).
+
+	long kd = code(d);    // This is d^(-1) mod N
+
+	// Case 1: (c,d) ~ (c',1)
+	if (kd>0) {               // d invertible, with inverse kd
+		ans[0] = reduce(xmodmul(c,kd,modulus));     // (c:d) = (c*kd:1)
+		ans[1] = chi[kd];
+		return ans;
+	}
+	else { 
+		long kc = code(c);    // This is c^(-1) mod N
+
+		// Case 2: (c,d) ~ (1, d')  with d' not a unit (mod N)
+		if (kc>0) {              // (c:d) = (1:kc*d) if c invertible
+			ans[0] = modulus-code(xmodmul(kc,d,modulus));
+			ans[1] = chi[kc];
+			return ans;
+		}
+
+		// Case 3: (c, d) ~ (c', d') with neither c' nor d' units (mod N)
+		else
+		{
+			long start = dstarts[noninvdlist[-kc]];
+			symb s(c,d,this);
+			long ind = specials.index(s,start);
+			if(ind<0) 
+			{
+				cout<<"error in index(): symbol "<<s<<" not in list!"<<endl;
+			}
+			ans[0] = nsymb1+ind;
+
+			// Make the +/- unimodular  matrix [aa, bb; c, d]
+			int aa, bb;
+			int tmp = intbezout(c, d, aa, bb);    // CHECK THIS -- Should we take the negative of this???
+
+			// Find the reduced symbol (c', d')
+			symb new_s = specials[ind];
+						
+			// Make the scaling factor so that u*(c,d) = (c', d') is a distinguished representative
+			long u = reduce(xmodmul(long(aa),new_s.dee(),modulus) - xmodmul(long(-bb),new_s.cee(),modulus));			
+			ans[1] = chi[u];
+
+			// SANITY CHECK: Check that uc - c' and ud - d' are zero mod N
+			if (u*c - new_s.cee() % modulus == 0) {
+				cout << "u*c is not c'";
+				exit(1);
+			}
+			if (u*d - new_s.dee() % modulus == 0) {
+				cout << "u*d is not d'";
+				exit(1);
+			}
+			
+			return ans;
+		
+		}
+	}
+}
+
+
+
+
+
 
 symb symbdata::symbol(long i) const
 { if (i<modulus) return symb(i,1,this);
@@ -210,8 +298,9 @@ void symbdata::display() const
 
 void symbdata::check(void) const
 {long i,j; int ok=1; symb s;
- for (i=0; i<nsymb; i++)
- {j = index(s=symbol(i));
+  for (i=0; i<nsymb; i++) {
+	//j = index(s=symbol(i));
+    j = index_with_pm(s=symbol(i))[0];
   if (i!=j) 
     {
       cout << i << "-->" << s << "-->" << j << "\n";
