@@ -26,13 +26,14 @@
 #include "moddata.h"
 #include "symb.h"
 
-#define AUTOLOOP
+//#define AUTOLOOP    // This arranges to test in a loop!
 
 int main(void)
 {
  init_time();
  start_time();
  int n=1; 
+ int char_top=1; 
  int plus=1;
  int verbose=0;
  cout << "Display symbol details (0/1)? " << flush; cin >> verbose;
@@ -42,11 +43,13 @@ int main(void)
  while (n<limit) { n++;
 #else
      while (n>0) { cout<<"Enter level: "; cin>>n;
+	   cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
+
 #endif
  if (n>0)
 {
  cout << ">>>Level " << n << "\t";
- symbdata symbols(n);
+ symbdata symbols(n, char_top);
  cout<<"("<<symbols.nsymb<<" symbols)\t";
  if(verbose) symbols.display();
  symbols.check();

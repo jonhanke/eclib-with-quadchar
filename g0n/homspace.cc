@@ -41,16 +41,21 @@ matop::matop(long a, long b, long c, long d)
   mats.push_back(mat22(a,b,c,d));
 }
 
-matop::matop(long p, long n)
+matop::matop(long p, const moddata *N)
 {
+	long n = N->modulus;
+	int eps = N->chi[p % n];  // Ok since p is positive
+	
  if (p==n)
    {
-     mats.push_back(mat22(0,-1,n,0));
+	   signs.push_back(1);
+	   mats.push_back(mat22(0,-1,n,0));
      return;
    }
  if ((n%p)==0)   // W involution, 1 term
    {
-      long u,v,a,b;
+	 signs.push_back(1);	   
+	   long u,v,a,b;
       for (u=1, v=n; v%p==0; v/=p, u*=p) ;
       bezout(u,v,a,b);
       mats.push_back(mat22(u*a,-b,n,u));
@@ -58,14 +63,22 @@ matop::matop(long p, long n)
    }
  // else  Hecke operator, p+1 terms
   {
+	signs.resize(p+1);
     mats.resize(p+1);
     long j, p2 = p>>1; 
-    for (j=0; j<p; j++) mats[j] = mat22(1,j-p2,0,p);
+	  for (j=0; j<p; j++) {
+		  signs[j] = 1;
+		  mats[j] = mat22(1,j-p2,0,p);
+	  }
+	signs[p] = eps;
     mats[p] = mat22(p,0,0,1);
   }
 }
  
-homspace::homspace(long n, int hp, int hcusp, int verbose) :symbdata(n)
+// Constructed from the level n,
+//  hp = plus space flag
+//  hcusp = 1  => computes the cuspidal subspace
+homspace::homspace(long n, long char_top, int hp, int hcusp, int verbose) :symbdata(n, char_top)
 { 
   init_time();
    plusflag=hp;
@@ -106,45 +119,68 @@ homspace::homspace(long n, int hp, int hcusp, int verbose) :symbdata(n)
 //      }
 //      }
 //    }
+
+// Some new declarations	
+int eps1, eps2, eps3;
+long J0, J1, J2, J3;
+vector<long> J1vec, J2vec, J3vec;
+	
 if (plusflag!=0)
   for (j=0; j<nsymb; j++)
-  {if (check[j]==0)
-   { rel[0]=j;
+  {if (check[j]==0)  // haven't dealt with this symbol yet
+   { J0=j;           // rel givs the indices of the original four symbols to be identified
      if (plusflag==-1) 
-       rel[1]=rof(j);
+       J1vec=rof_with_pm(j);
      else
-       rel[1]=rsof(j);
-     rel[2]=sof(j);
-     rel[3]=sof(rel[1]);
-     if (verbose>1)
-       cout << "Relation: " << rel[0]<<" "<<rel[1]<<" "<<rel[2]<<" "<<rel[3]<<endl;
-     for (k=0; k<4; k++) check[rel[k]]=1;
-     if ( (j==rel[2]) || (j==rel[3]) )
-         for (k=0; k<4; k++) coordindex[rel[k]]=0;
+       J1vec=rsof_with_pm(j);
+
+	 J2vec=sof_with_pm(j);
+	 J3vec=sof_with_pm(J1vec[0]);
+
+	   J1 = J1vec[0];
+	   J2 = J2vec[0];
+	   J3 = J3vec[0];	   
+	   eps1 = J1vec[1];
+	   eps2 = J2vec[1];
+	   eps3 = J3vec[1];
+	   
+	   if (verbose>1)
+       cout << "Relation: " << J0<<" "<< J1vec <<" "<< J2vec <<" "<< J3vec <<endl;
+     //for (k=0; k<4; k++) check[rel[k]]=1;  // check that all four of these are handled
+
+ 	 // These are now handled!   
+	   check[J0] = check[J1] = check[J2] = check[J3] = 1;
+	   
+	 // This is the case of torsion!
+	   if (((J1 == J0) && (eps1 == -1)) || ((J2 == J0) && (eps2 == 1)) || ((J3 == J0) && (eps3 == 1)))
+		   coordindex[J0] = coordindex[J1] = coordindex[J2] = coordindex[J3] = 0;
      else
      {   ngens++;
          gens[ngens] = j;
          if (verbose>1)  cout << "gens["<<ngens<<"]="<<j<<endl;
-         coordindex[rel[0]] =  ngens;
-         coordindex[rel[1]] =  ngens;
-         coordindex[rel[2]] = -ngens;
-         coordindex[rel[3]] = -ngens;
+         coordindex[J0] =  ngens;
+         coordindex[J1] =  eps1 * ngens;
+         coordindex[J2] = -eps2 * ngens;
+         coordindex[J3] = -eps3 * ngens;
      }
      }
    }
+// THIS IS BROKEN!
 if (plusflag==0)
   {for (j=0; j<nsymb; j++)
    {if (check[j]==0)
-    {rel[0]=j;
-     rel[1]=sof(j);
-     check[rel[0]] = check[rel[1]] = 1;
-     if (j==rel[1])
-         for (k=0; k<2; k++) coordindex[rel[k]]=0;
+    {J0=j;
+     J1vec=sof_with_pm(j);
+		J1 = J1vec[0];
+		eps1 = J1vec[1];
+		check[J0] = check[J1] = 1;
+     if ((J0 == J1) && (eps1 == 1))
+		 coordindex[J0] = coordindex[J1] = 0;
      else
      {   ngens++;
-         gens[ngens] = j;
-         coordindex[rel[0]] =  ngens;
-         coordindex[rel[1]] = -ngens;
+         gens[ngens] = j;  // This is J0, but we write it as j here.
+         coordindex[J0] =  ngens;
+         coordindex[J1] = -eps1 * ngens;
      }
     }
    }
@@ -186,53 +222,86 @@ if (verbose>1)
        cout << "relation matrix has = "<<(maxnumrel*ngens)<<" entries..."<<endl;
      }
    {
-#ifdef USE_SMATS
-   smat relmat((int)maxnumrel,(int)ngens);
-   svec newrel(ngens);
+#ifdef USE_SMATS    // This is what we do -- use sparse matrices!
+   smat relmat((int)maxnumrel,(int)ngens);  // full relation matrix
+   svec newrel(ngens);              // each new row of this matrix
 #else
    mat relmat(maxnumrel,ngens);
    vec newrel(ngens);
    if (verbose) cout << "successfully allocated "<<endl;
 #endif
-   int numrel = 0;
+   int numrel = 0;    // this is the number of rows we have filled in so far.
    long ij; int fix;
 
-   for (i=0; i<nsymb; i++) check[i]=0;
+   for (i=0; i<nsymb; i++) check[i]=0;   //zero out the check array. (checked nothing so far)
    for (k=0; k<nsymb; k++) 
      {
      if (check[k]==0)
    {
 #ifdef USE_SMATS
-     newrel.clear();
+     newrel.clear();   // clear the current row.
 #else
      for (j=1; j<=ngens; j++) newrel[j]=0;
 #endif
-     rel[2]=tof(rel[1]=tof(rel[0]=k));
-     if (verbose>1)   cout << "Relation: " << rel[0]<<" "<<rel[1]<<" "<<rel[2]<<" --> ";
-     for (j=0; j<3; j++)
-     {ij = rel[j];
-      check[ij] = 1;
-      if (plusflag) check[rof(ij)] = 1;
-      fix = coordindex[ij];
+	   J0 = k;
+
+	   J1vec = tof_with_pm(J0);
+	   J1 = J1vec[0];
+	   eps1 = J1vec[1];
+
+	   J2vec = tof_with_pm(J1);
+	   J2 = J2vec[0];
+	   eps2 = J2vec[1];	   
+	   
+     if (verbose>1)   cout << "Relation: " << J0 <<" "<< J1vec <<" "<< J2vec <<" --> ";
+
 #ifdef USE_SMATS
-      if(fix) newrel.add(abs(fix),(fix>0?1:-1));
-#else
-      if (verbose>1)  cout << fix << " ";
-      if (fix!=0) newrel[abs(fix)] += sign(fix);
+	   // Add the contribution from the three signed symbols to the 3-term relation row
+	   check[J0] = 1;
+	   fix = coordindex[J0];
+	   if (fix > 0)
+		   newrel.add(fix, 1);
+	   else if (fix < 0)
+		   newrel.add(-fix, -1);
+
+	   check[J1] = 1;
+	   fix = coordindex[J1];
+	   if (fix > 0)
+		   newrel.add(fix, eps1);
+		else if (fix < 0)
+			newrel.add(-fix, -eps1);
+
+	   check[J2] = 1;
+	   fix = coordindex[J2];
+	   if (fix > 0)
+		   newrel.add(fix, eps1 * eps2);
+	   else if (fix < 0)
+		   newrel.add(-fix, -eps1 * eps2);
+			   
+
+	   
+#else  // BIG WARNING: This has not been changed to work with characters yet!
+	   if (verbose>1)  cout << fix << " ";
+	   if (fix!=0) newrel[abs(fix)] += sign(fix);
 #endif
-     }
+		 
+	   
+	   
+// ====================
+
 #ifdef USE_SMATS
-     if(verbose>1) cout<<newrel<<"\n";
+     if(verbose>1) cout << newrel <<"\n";
 #else
-     if(verbose>1) cout<<"\n";
+     if(verbose>1) cout << "\n";
 #endif
+
 #ifdef USE_SMATS
-     if(newrel.size()!=0) 
+     if(newrel.size()!=0) // Update the matrix for non-zero rows!
        {
 	 numrel++;
-	 make_primitive(newrel);
+	 make_primitive(newrel);  // divides out by the gcd (if there is any, but at most 3 here!).
 	 if(numrel<=maxnumrel)
-	   relmat.setrow(numrel,newrel);
+	   relmat.setrow(numrel,newrel);  // set this row of the matrix
 	 else 
 	   cout<<"Too many 3-term relations (numrel="<<numrel
 	       <<", maxnumrel="<<maxnumrel<<")"<<endl;
@@ -286,7 +355,7 @@ if (verbose>1)
    //relmat=smat(0,0); // clear space
    int d1;
    start_time();
-   smat sp = liftmat(sme.kernel(npivs,pivs),MODULUS,d1);
+   smat sp = liftmat(sme.kernel(npivs,pivs),MODULUS,d1);  // lift from mod p to characteristic 0
    stop_time();
    if (verbose) {cout<<"time to compute kernel = "; show_time(); cout<<endl;}
    denom1=d1;
@@ -296,14 +365,14 @@ if (verbose>1)
        cout << "pivots = "<<pivs << endl;
        cout << "denom = "<<d1 << endl;
      }
-   rk = ncols(sp);
+   rk = ncols(sp);                   // This is the dimension of symbols, modulo all 2 and 3-term relations!
    coord_vecs.resize(ngens+1); // 0'th is unused
    for(i=1; i<=ngens; i++) 
      coord_vecs[i]=sp.row(i);
    //sp=smat(0,0); // clear space
 #else
    subspace sp = kernel(relmat);
-   rk = dim(sp);
+   rk = dim(sp);                   // This is the dimension of symbols, modulo all 2 and 3-term relations!
    coord = basis(sp);
    pivs = pivots(sp);
    denom1 = denom(sp);
@@ -496,67 +565,93 @@ vec homspace::contract_coords(const vec& v)
 }
 
 
-
+// JON -- CHANGED THIS ONE!
 svec homspace::chain(const symb& s) const
 {
- long i= coordindex[index(s)];
- if (i>0) return  coord_vecs[i];
- if (i<0) return -coord_vecs[-i];
+ vector<long> V = index_with_pm(s);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) return  eps * coord_vecs[i];
+ if (i<0) return -eps * coord_vecs[-i];
  return svec(rk);
 }
 
-void homspace::add_chain(svec& v, const symb& s) const
+void homspace::add_chain(svec& v, const symb& s, int pm) const
 {
- long i= coordindex[index(s)];
- if (i>0) {v+=coord_vecs[i]; return;}
- if (i<0) {v-=coord_vecs[-i]; return;}
+	vector<long> V = index_with_pm(s);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) {v += (pm * eps) * coord_vecs[i]; return;}
+ if (i<0) {v -= (pm * eps) * coord_vecs[-i]; return;}
 }
 
 vec homspace::projchaincd(long c, long d, const mat& m) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) return  m.row(i);
- if (i<0) return -m.row(-i);
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) return  eps * m.row(i);
+ if (i<0) return -eps * m.row(-i);
  return vec(ncols(m));
 }
 
 long homspace::nfprojchaincd(long c, long d, const vec& bas) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) return  bas[i];
- if (i<0) return -bas[-i];
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) return  eps * bas[i];
+ if (i<0) return -eps * bas[-i];
  return 0;
 }
 
 svec homspace::chaincd(long c, long d) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) return  coord_vecs[i];
- if (i<0) return -coord_vecs[-i];
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) return  eps * coord_vecs[i];
+ if (i<0) return -eps * coord_vecs[-i];
  return svec(rk);
 }
 
 void homspace::add_projchaincd(vec& v, long c, long d, const mat& m) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) {add_row_to_vec(v,m,i); return;}
- if (i<0) {sub_row_to_vec(v,m,-i); return;}
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+	if (eps > 0){
+		if (i>0) {add_row_to_vec(v,m,i); return;}
+		if (i<0) {sub_row_to_vec(v,m,-i); return;}
+	}
+	else {
+		if (i>0) {sub_row_to_vec(v,m,i); return;}
+		if (i<0) {add_row_to_vec(v,m,-i); return;}
+	}		
 }
 
 void homspace::add_nfprojchaincd(long& a, long c, long d, const vec& bas) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) {a += bas[i]; return;}
- if (i<0) {a -= bas[-i]; return;}
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) {a += eps * bas[i]; return;}
+ if (i<0) {a -= eps * bas[-i]; return;}
 }
 
-void homspace::add_chaincd(svec& v, long c, long d) const 
+void homspace::add_chaincd(svec& v, long c, long d, int pm) const 
 {
- long i= coordindex[index2(c,d)];
- if (i>0) {v+=coord_vecs[i]; return;}
- if (i<0) {v-=coord_vecs[-i]; return;}
+	vector<long> V = index2_with_pm(c,d);
+	int eps = V[1];
+	long i = coordindex[V[0]];
+ if (i>0) {v += (pm * eps) * coord_vecs[i]; return;}
+ if (i<0) {v -= (pm * eps) * coord_vecs[-i]; return;}
 }
 
+	
+	
+	
+//Jon --  This is unchanged!	
 svec homspace::chain(long nn, long dd) const
 {
    svec ans = chaincd(0,1);
@@ -570,15 +665,15 @@ svec homspace::chain(long nn, long dd) const
    return ans;
 }
 
-void homspace::add_chain(svec& v, long nn, long dd) const
+void homspace::add_chain(svec& v, long nn, long dd, int pm) const
 {
-   add_chaincd(v,0,1);
+   add_chaincd(v,0,1,pm);
    long c=0, d=1, e, a=nn, b=dd, q, f;
    while (b)
    { q=a/b; 
      f=a; a=-b; b= f-q*b; 
      e=d; d= c; c=(-q*c-e)%modulus;
-     add_chaincd(v,c,d);
+     add_chaincd(v,c,d,pm);
    }
 }
 
@@ -634,7 +729,7 @@ void homspace::add_nfprojchain(long& aa, long nn, long dd, const vec& bas) const
 
 svec homspace::applyop(const matop& mlist, const rational& q) const
 { svec ans(rk);  long i=mlist.size();
-  while (i--) add_chain(ans,mlist[i](q));
+  while (i--) add_chain(ans,mlist[i](q),mlist.sign(i));   // This now uses the internal list of signs!
   return ans;
 }
  
@@ -736,14 +831,14 @@ smat homspace::s_calcop(string opname, long p, const matop& mlist,
 
 mat homspace::heckeop(long p, int dual, int display) const
 {
- matop matlist(p,modulus);
+ matop matlist(p,this);
  string name = ((modulus%p) ? T_opname : W_opname);
  return calcop(name,p,matlist,dual,display);
 }
  
 smat homspace::s_heckeop(long p, int dual, int display) const
 {
- matop matlist(p,modulus);
+ matop matlist(p,this);
  string name = ((modulus%p) ? T_opname : W_opname);
  return s_calcop(name,p,matlist,dual,display);
 }
@@ -751,7 +846,7 @@ smat homspace::s_heckeop(long p, int dual, int display) const
 mat homspace::heckeop_restricted(long p,const subspace& s, 
 				 int dual, int display) const
 {
- matop matlist(p,modulus);
+ matop matlist(p,this);
  string name = ((modulus%p) ? T_opname : W_opname);
  return calcop_restricted(name,p,matlist,s,dual,display);
 }
@@ -759,7 +854,7 @@ mat homspace::heckeop_restricted(long p,const subspace& s,
 smat homspace::s_heckeop_restricted(long p,const ssubspace& s, 
 				    int dual, int display) const
 {
- matop matlist(p,modulus);
+ matop matlist(p,this);
  string name = ((modulus%p) ? T_opname : W_opname);
  return s_calcop_restricted(name,p,matlist,s,dual,display);
 }
@@ -790,13 +885,13 @@ mat homspace::newheckeop(long p, int dual, int display) const
 
 mat homspace::wop(long q, int dual, int display) const
 {
- matop matlist(q,modulus);
+ matop matlist(q,this);
  return calcop(W_opname,q,matlist,dual,display);
 }
  
 smat homspace::s_wop(long q, int dual, int display) const
 {
- matop matlist(q,modulus);
+ matop matlist(q,this);
  return s_calcop(W_opname,q,matlist,dual,display);
 }
  
@@ -873,7 +968,7 @@ smat homspace::s_conj_restricted(const ssubspace& s,
 
 mat homspace::fricke(int dual, int display) const
 {
- matop frickelist(modulus,modulus);
+ matop frickelist(modulus, this);
  return calcop(W_opname,modulus,frickelist,dual,display);
 }
 
@@ -1020,15 +1115,15 @@ vec homspace::maninvector(long p) const
   if (plusflag!=-1) 
     {
       if (p==2) 
-	add_chain(tvec,1,2); 
+	add_chain(tvec,1,2,1); 
       else
 	{ 
 	  p2=(p-1)>>1;
-	  for (i=1; i<=p2; i++) { add_chain(tvec,i,p); }
+	  for (i=1; i<=p2; i++) { add_chain(tvec,i,p,1); }
 	  if(plusflag)   
 	    tvec *=2;
 	  else
-	    for (i=1; i<=p2; i++) { add_chain(tvec,-i,p); }
+	    for (i=1; i<=p2; i++) { add_chain(tvec,-i,p,1); }
 	}
     }
   if(cuspidal) 

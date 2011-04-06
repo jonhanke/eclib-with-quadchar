@@ -27,11 +27,13 @@
 #include "homspace.h"
 #include "timer.h"
 
-#define AUTOLOOP
+//#define AUTOLOOP
 //#define SHOW_TIMES
 
 int main(void)
 {
+	long char_top=1;
+	
   init_time();
  int n=1; 
  int plus=1;
@@ -47,6 +49,7 @@ int main(void)
   while (n<limit) { n++;
 #else
   while (n>0) { cout<<"Enter level: "; cin>>n;
+	  cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
 #endif
  if (n>0)
 {
@@ -60,7 +63,7 @@ int main(void)
             cout<<"Computing sign="<<plus<<" space"<<endl;
           }
 	start_time();
-	homspace hplus(n,plus, cuspidal,verbose);
+	homspace hplus(n,char_top, plus, cuspidal,verbose);
 	stop_time();
 	int dim = hplus.h1dim();
 	int cdim = hplus.h1cuspdim();

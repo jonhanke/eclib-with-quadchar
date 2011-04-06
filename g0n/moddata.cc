@@ -64,7 +64,7 @@ long bezout_x(long aa, long bb, long& xx)
  else     {xx= oldx; return( a);}
 }
  
-moddata::moddata(long n) :level(n)
+moddata::moddata(long n, long chi_d) :level(n)
 {
   //   cout << "In constructor moddata::moddata.\n";
  long i,p,x,d,nd,nnoninv;
@@ -131,7 +131,53 @@ moddata::moddata(long n) :level(n)
    }
  }
  if (ndivs>0) {dstarts.reserve(ndivs);}
+
+// Initialize the quadratic character
+init_quadchar(chi_d);
+
 }
+
+
+
+// =====================================================================
+// This initializes the moddata class, allowing both a level n and 
+// a quadratic character determined by a fundamental discriminant chi_d
+// =====================================================================
+void moddata::init_quadchar(long chi_d)
+{
+	// Store the quadratic character top value and modulus
+	chi_top = chi_d;
+	chi_modulus = abs(chi_d);
+
+	// SANITY CHECK: Check if the character is specified by a fundamental discriminant
+	long chi_pos_mod_four = posmod(chi_top, 4);
+	if ((chi_pos_mod_four == 2) || (chi_pos_mod_four == 3)) {
+		cout << "Error: The character discriminant is not = 0, 1 (mod 4).";
+		::abort();
+	}
+	if ((chi_modulus % 8 == 0) && (chi_modulus != 8)) {
+		cout << "Error: The character conductor is divisible by 8, but isn't 8 or -8.";
+		::abort();
+	}
+		
+	// SANITY CHECK: Check that the character modulus divides the level
+	if (modulus % chi_modulus != 0) {
+		cout << "Error: The character conductor " << chi_modulus << " must divide the level " << modulus << ".";  
+		::abort();
+	}
+		
+	// Initialize the table of values for the character chi (modulo the level, not the conductor!)
+	for (long i=0; i<modulus; i++) {
+		chi.push_back(kronecker(chi_d, i)); 
+	}
+
+	// Print the table of character values
+	cout << chi << endl;
+
+}
+
+
+
 
 void moddata::display() const
 {

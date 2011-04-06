@@ -78,16 +78,25 @@ class symbdata :public moddata {
  private:
     symblist specials;         // The list of "special" symbols
  public:
-    symbdata(long);             // The constructor
+    symbdata(long n, long char_top=1);             // The constructor, now modified to allow quadratic characters!
     long index2(long c, long d) const;
+    vector<long> index2_with_pm(long c, long d) const;   // This enhances index2 to use a quadratic character.
     long index(const symb& s) const {return index2(s.cee(),s.dee());}
+    vector<long> index_with_pm(const symb& s) const {return index2_with_pm(s.cee(),s.dee());}
     symb symbol(long i) const;
     void display() const;
     void check() const;
+
     long rof(long i) const {symb s=symbol(i); return index2(s.dee(), s.cee());}
     long rsof(long i) const {symb s=symbol(i); return index2(-s.cee(),s.dee());}
     long sof(long i) const {symb s=symbol(i); return index2(-s.dee(), s.cee());}
     long tof(long i) const {symb s=symbol(i); long c=s.cee(), d=s.dee(); return index2(c-d, c);} 
+
+    vector<long> rof_with_pm(long i) const {symb s=symbol(i); return index2_with_pm(s.dee(), s.cee());}
+    vector<long> rsof_with_pm(long i) const {symb s=symbol(i); return index2_with_pm(-s.cee(),s.dee());}
+    vector<long> sof_with_pm(long i) const {symb s=symbol(i); return index2_with_pm(-s.dee(), s.cee());}
+    vector<long> tof_with_pm(long i) const {symb s=symbol(i); long c=s.cee(), d=s.dee(); return index2_with_pm(c-d, c);} 
+	
 };
 
 modsym jumpsymb(symb s1, symb s2);
