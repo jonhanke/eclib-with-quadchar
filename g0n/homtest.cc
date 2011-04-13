@@ -41,7 +41,7 @@ int main(void)
  int cuspidal=0;
  long *dims = new long[3];
  long *cdims = new long[3];
- // cout << "Verbose? "; cin >> verbose;
+  cout << "Verbose? (0/1)"; cin >> verbose;
  // cout << "Plus space, minus space or full space (+1,-1,0)? "; cin >> plus;
  int s,limit; 
 #ifdef AUTOLOOP
