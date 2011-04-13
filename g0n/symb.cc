@@ -254,27 +254,33 @@ vector<long> symbdata::index2_with_pm(long c, long d) const {
 
 			// Make the +/- unimodular  matrix [aa, bb; c, d]
 			int aa, bb;
-			int tmp = intbezout(c, d, bb, aa);   // Note:  Here aa * d + bb * c = tmp = 1.
-			//cout << "c = " << c << "   d = " << d << endl;
-			//cout << "aa = " << aa << "   bb = " << bb << endl;
+			int g = intbezout(c, d, bb, aa);   // Note:  Here aa * d + bb * c = g = gcd(c,d) with g>0 and gcd(g,N)=1.
 			
 			// Find the reduced symbol (c', d')
 			symb new_s = specials[ind];
+
+                        // Diagnostic output:
+			//cout << "c = " << c << "   d = " << d << endl;
+			//cout << "aa = " << aa << "   bb = " << bb << endl;
 			//cout << "new_s = " << new_s << endl;
 			
-			// Make the scaling factor so that u*(c,d) = (c', d') is a distinguished representative
+			// Make the scaling factor so that u*(c,d)/g = (c', d') is a distinguished representative
 			long u = reduce(xmodmul(long(aa),new_s.dee(),modulus) - xmodmul(long(-bb),new_s.cee(),modulus));			
+			ans[1] = chi[u]*chi[g];
+
+                        // Diagnostic output:
 			//cout << " u = " << u << endl;
-			ans[1] = chi[u];
+			//cout << " g = " << g << endl;
 			//cout << " chi[u] = " << chi[u] << endl;
+			//cout << " chi[g] = " << chi[g] << endl;
 
 			// SANITY CHECK: Check that uc - c' and ud - d' are zero mod N
-			if ((u*c - new_s.cee()) % modulus != 0) {
-				cout << "u*c is not c'";
+			if ((u*c - g*new_s.cee()) % modulus != 0) {
+                          cout << "u*c is not g*c'" << endl;
 				exit(1);
 			}
-			if ((u*d - new_s.dee()) % modulus != 0) {
-				cout << "u*d is not d'";
+			if ((u*d - g*new_s.dee()) % modulus != 0) {
+                          cout << "u*d is not g*d'" << endl;
 				exit(1);
 			}
 			
