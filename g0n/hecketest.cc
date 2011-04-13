@@ -69,6 +69,7 @@ int main(void)
  init_time();
  start_time();
  bigint P = BIGINT(BIGPRIME);
+ long char_top=1;
  int n=1; 
  int plus=1;
  int verbose=0;
@@ -80,11 +81,12 @@ int main(void)
      while (n<limit) { n++;
 #else
      while (n>0) { cout<<"Enter level: "; cin>>n;
+		 cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
 #endif
  if (n>0)
 {
  cout << ">>>Level " << n << "\t";
- homspace hplus(n,plus,0,0);
+ homspace hplus(n, char_top, plus,0,0);
  int genus = hplus.h1dim();
  long den = hplus.h1denom();
  bigint den2; den2 = den*den;
