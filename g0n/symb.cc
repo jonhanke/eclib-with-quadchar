@@ -254,21 +254,26 @@ vector<long> symbdata::index2_with_pm(long c, long d) const {
 
 			// Make the +/- unimodular  matrix [aa, bb; c, d]
 			int aa, bb;
-			int tmp = intbezout(c, d, aa, bb);    // CHECK THIS -- Should we take the negative of this???
-
+			int tmp = intbezout(c, d, bb, aa);   // Note:  Here aa * d + bb * c = tmp = 1.
+			//cout << "c = " << c << "   d = " << d << endl;
+			//cout << "aa = " << aa << "   bb = " << bb << endl;
+			
 			// Find the reduced symbol (c', d')
 			symb new_s = specials[ind];
-						
+			//cout << "new_s = " << new_s << endl;
+			
 			// Make the scaling factor so that u*(c,d) = (c', d') is a distinguished representative
 			long u = reduce(xmodmul(long(aa),new_s.dee(),modulus) - xmodmul(long(-bb),new_s.cee(),modulus));			
+			//cout << " u = " << u << endl;
 			ans[1] = chi[u];
+			//cout << " chi[u] = " << chi[u] << endl;
 
 			// SANITY CHECK: Check that uc - c' and ud - d' are zero mod N
-			if (u*c - new_s.cee() % modulus == 0) {
+			if ((u*c - new_s.cee()) % modulus != 0) {
 				cout << "u*c is not c'";
 				exit(1);
 			}
-			if (u*d - new_s.dee() % modulus == 0) {
+			if ((u*d - new_s.dee()) % modulus != 0) {
 				cout << "u*d is not d'";
 				exit(1);
 			}

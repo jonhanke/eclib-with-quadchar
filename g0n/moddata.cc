@@ -152,20 +152,26 @@ void moddata::init_quadchar(long chi_d)
 	// SANITY CHECK: Check if the character is specified by a fundamental discriminant
 	long chi_pos_mod_four = posmod(chi_top, 4);
 	if ((chi_pos_mod_four == 2) || (chi_pos_mod_four == 3)) {
-		cout << "Error: The character discriminant is not = 0, 1 (mod 4).";
+		cout << "Error: The character discriminant is not = 0, 1 (mod 4)." << endl;
 		::abort();
 	}
-	if ((chi_modulus % 8 == 0) && (chi_modulus != 8)) {
-		cout << "Error: The character conductor is divisible by 8, but isn't 8 or -8.";
+	if ((chi_modulus % 16 == 0) || (0 == 1)) {   // ***** FIX THIS TO ENSURE D IS SQUAREFREE AT ALL PRIMES p>2 *****
+		cout << "Error: The character discriminant has prime power factors (not dividing 8)." << endl;
 		::abort();
 	}
 		
 	// SANITY CHECK: Check that the character modulus divides the level
 	if (modulus % chi_modulus != 0) {
-		cout << "Error: The character conductor " << chi_modulus << " must divide the level " << modulus << ".";  
+		cout << "Error: The character conductor " << chi_modulus << " must divide the level " << modulus << "." << endl;  
 		::abort();
 	}
-		
+
+	// SANITY CHECK:  Check that the character is even! 
+	if (kronecker(chi_d, -1) != 1) {
+		cout << "Error: The character must be even." << endl;
+		::abort();		
+	}
+	
 	// Initialize the table of values for the character chi (modulo the level, not the conductor!)
 	for (long i=0; i<modulus; i++) {
 		chi.push_back(kronecker(chi_d, i)); 

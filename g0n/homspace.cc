@@ -142,7 +142,7 @@ if (plusflag!=0)
 	   J3 = J3vec[0];	   
 	   eps1 = J1vec[1];
 	   eps2 = J2vec[1];
-	   eps3 = J3vec[1];
+	   eps3 = eps1 * J3vec[1];
 	   
 	   if (verbose>1)
        cout << "Relation: " << J0<<" "<< J1vec <<" "<< J2vec <<" "<< J3vec <<endl;
@@ -165,7 +165,9 @@ if (plusflag!=0)
      }
      }
    }
-// THIS IS BROKEN!
+
+	
+// Deal with the full (plus and minus) space
 if (plusflag==0)
   {for (j=0; j<nsymb; j++)
    {if (check[j]==0)
@@ -174,7 +176,8 @@ if (plusflag==0)
 		J1 = J1vec[0];
 		eps1 = J1vec[1];
 		check[J0] = check[J1] = 1;
-     if ((J0 == J1) && (eps1 == 1))
+     // Test for symbol is zero
+	 if ((J0 == J1) && (eps1 == 1))
 		 coordindex[J0] = coordindex[J1] = 0;
      else
      {   ngens++;
@@ -213,7 +216,8 @@ if (verbose>1)
 // 3-term relations
  
 //   long maxnumrel = 20+(2*ngens)/3;
- long maxnumrel = ngens+10;  
+//   long maxnumrel = ngens + 10;
+	long maxnumrel = nsymb;  // This is an absolute upper bound for the number of 3-term relations!
 
    if (verbose)
      {
