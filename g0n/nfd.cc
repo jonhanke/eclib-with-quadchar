@@ -60,7 +60,7 @@ nfd::nfd(homspace* in_h1, int one_p, int w_split, int mult_one, int verbose)
       while (n%pr==0) pr++; 
       p=pr;
       cout << "Computing T_p for p = " << p << "..." << flush;
-      tp = transpose(h1->newheckeop(p,0));
+      tp = transpose(h1->heckeop(p,0));
       cout<<"done."<<endl;
     }
   else
@@ -78,7 +78,7 @@ nfd::nfd(homspace* in_h1, int one_p, int w_split, int mult_one, int verbose)
 	  else
 	    {
 	      cout << "Computing T_p for p = " << p << "..." << flush;
-	      tp1 = transpose(h1->newheckeop(p,0));
+	      tp1 = transpose(h1->heckeop(p,0));
 	      cout<<"done."<<endl;
 	      cout<<"coefficient of T_"<<p<<": "; cin>>ap1;
 	      if(ap1!=1) tp1*=ap1;
@@ -338,7 +338,7 @@ vec_m nfd::ap(long p)
   vec_m apvec(dims);
   int bad = ::div(p,n);
   if(bad) return apvec; // temporary fix!
-  if(bad) matlist=new matop(p,n);
+  if(bad) matlist=new matop(p,h1);
   else    matlist=new matop(p);
 
   for(k=0; k<rk; k++)
@@ -368,7 +368,7 @@ vec_m nfd::ap(long p)
 
 mat_m nfd::oldheckeop(long p)
 {
-  return restrict(transpose(h1->newheckeop(p,0)),S);
+  return restrict(transpose(h1->heckeop(p,0)),S);
 }
 
 mat_m nfd::heckeop(long p)
@@ -381,7 +381,7 @@ mat_m nfd::heckeop(long p)
   if(bad) 
     {
       cout<<"q = "<<p<<"\t";
-      matlist=new matop(p,n);
+      matlist=new matop(p,h1);
     }
   else
     {

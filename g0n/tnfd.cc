@@ -44,6 +44,7 @@ int main()
  cout << "MODULUS for linear algebra = " << MODULUS << endl;
 #endif
  long n=1; 
+ long char_top=1;
  int plus=1;
  int verbose=1;
  int w_split=0;
@@ -54,12 +55,13 @@ int main()
  while (cout<<"Enter level: ", cin>>n, n>0)
    {
      cout << ">>>Level " << n << "\t";
-     homspace hplus(n,plus,0,0);
+     cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
+     homspace hplus(n,char_top,plus,0,0);
      int dimh = hplus.h1dim();
      cout << "dimension = " << dimh << endl;
 
-     cout << "Split into W-eigenspaces (0/1)? "; 
-     cin >> w_split;
+     //cout << "Split into W-eigenspaces (0/1)? "; 
+     //cin >> w_split;
      cout << "Multiplicity 1 eigenspaces only? (0/1)? "; 
      cin >> mult_one;
      cout << "Use just one T_p (1) or a linear combination (0)? "; 
@@ -76,14 +78,15 @@ int main()
      for(ip=0; ip<nap; ip++, pr++)
        {
 	 p=pr; bad = ::div(p,n);
+         while(bad) {pr++; p=pr; bad = ::div(p,n);} // skip over bad primes
 	 if(verbose)
 	   {
 	     mat_m tp = form.oldheckeop(p);
 	     if(den>1) cout<<den<<"*";
 	     cout<<"Matrix of ";
-	     if(bad) cout<<"W("; else cout<<"T(";
-	     cout <<p<<") = "; 
+	     cout<<"T("<<p<<") = "; 
 	     showmatrix(tp);
+             // TODO: check whether a good algorithm is used for charpoly
 	     vector<bigint> cptp = charpoly(tp);
 	     for(i=0; i<dims; i++)
 	       {
