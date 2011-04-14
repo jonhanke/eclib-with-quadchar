@@ -43,7 +43,8 @@
 
 //#define AUTOLOOP
 //#define COMPARE_OLD
-//#define CHECK_COMMUTE
+//#define COMPUTE_ATKIN_LEHNER
+#define CHECK_COMMUTE
 //#define TEST_EIGS
 
 double sparsity(const mat_m& m);
@@ -109,6 +110,7 @@ int main(void)
    ssubspace h1minus = eigenspace(conjmat,-den);
    cout<<" done, dimension = "<<dim(h1minus)<<endl;
 
+#ifdef COMPUTE_ATKIN_LEHNER
    int w_eigs=0;
    cout<<"Compute W-eigenspaces? "; cin>>w_eigs;
    for (int i=0; i<nq; i++)
@@ -154,10 +156,11 @@ int main(void)
       cout<<endl;
 #endif
     }
+#endif
 
    int np=5,ip=0; 
    cout<<"How many T_p? "; cin>>np;
-   mat_m* tplist = new mat_m[np];
+   mat* tplist = new mat[np];
    for (primevar pr(np+nq); pr.ok()&&ip<np; pr++, ip++)
      {while (n%pr==0) pr++;
       int p=pr;
@@ -392,14 +395,16 @@ int main(void)
       cout<<"Total multiplicity of rational eigenvalues = "<<totalmult<<endl;
 #endif // TEST_EIGS
 #ifdef CHECK_COMMUTE
+#ifdef COMPUTE_ATKIN_LEHNER
       for (int kp=firstq; kp<nq; kp++)
 	{if (matmulmodp(wqlist[kp],tplist[ip],P)!=matmulmodp(tplist[ip],wqlist[kp],P))
 	   {
 	     cout << "Problem: T_p matrix "<<ip<<" and W_q matrix "<<kp<<" do not commute!" << "\n";
 	   }
        }
+#endif
       for (int jp=0; jp<ip; jp++)
-	{if (matmulmodp(tplist[ip],tplist[jp],P)!=matmulmodp(tplist[jp],tplist[ip],P))
+	{if (matmulmodp(tplist[ip],tplist[jp],BIGPRIME)!=matmulmodp(tplist[jp],tplist[ip],BIGPRIME))
 	   {
 	     cout << "Problem: T_p matrices "<<ip<<" and "<<jp<<" do not commute!" << "\n";
 	   }
