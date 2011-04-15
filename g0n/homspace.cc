@@ -82,15 +82,6 @@ homspace::homspace(long n, long char_top, int hp, int hcusp, int verbose) :symbd
    plusflag=hp;
    cuspidal=hcusp;
    long i,j,k,k2,mk;
-   mat22 gamma_u;  // A matrix in Gamma_H not in Gamma_0(N) (for non-trivial character)
-   if (u==0) //  trivial char
-     gamma_u=mat22(1,0,0,1);
-   else      // nontrivial, chi(u)=-1
-     {
-       k = bezout(n,u,i,j); // n*i+u*j=k=1
-       gamma_u=mat22(j,-i,n,u);
-     }
-
    coordindex = new int[nsymb];  
    if (!coordindex) abort(string("coordindex").c_str());
    int* check = new int[nsymb];  
@@ -463,20 +454,30 @@ if (verbose>1)
    if (verbose) cout << "About to compute matrix of delta"<<endl;
    mat deltamat=mat(ncusps,rk);  // should make this sparse
 
+// A matrix in Gamma_H not in Gamma_0(N) (for non-trivial character):
+   mat22 g_u(gamma_u[0],gamma_u[1],gamma_u[2],gamma_u[3]);
+   int jlim=2; 
+   if(u) jlim=4; // nontrivial char
+   rational c; long s;
    for (i=0; i<rk; i++)
      {
        modsym m(symbol(freegens[i]));
-       for (j=1; j>-3; j-=2)
+       for (j=0; j<jlim; j++)
 	 {
-	   rational c = (j==1 ? m.beta() : m.alpha());
+           switch(j) {
+           case 0: c = m.alpha(); s=-1; break;
+           case 1: c = m.beta(); s=1; break;
+           case 2: c = g_u(m.alpha()); s=-1; break;
+           case 3: c = g_u(m.beta()); s=1; break;
+           }
            if (plusflag==-1)
              k = cusps.index_1(c);
            else 
              k = cusps.index(c);
            if (k>0)
-             deltamat(k,i+1) += j;
+             deltamat(k,i+1) += s;
            if (k<0)
-             deltamat(-k,i+1) -= j;
+             deltamat(-k,i+1) -= s;
 	 }
      }
    if (verbose)

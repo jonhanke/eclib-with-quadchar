@@ -88,13 +88,21 @@ int main(void)
     cout<<"***************************************************"<<endl;
 #endif
     if (dims[1]==dims[0]+dims[2])
-      continue; //cout<<"\tDimensions add up OK at level "<<n;
+      {
+        //cout<<"\tDimensions add up OK at level "<<n;
+      }
     else
-      cout<<"****************Dimensions inconsistent for level "<<n<<" ***************"<<endl;
+      {
+        cout<<"****************Dimensions inconsistent for level "<<n<<" ***************"<<endl;
+      }
     if ((cdims[1]==cdims[0]+cdims[2])&&(cdims[0]==cdims[2]))
-      continue; //cout<<"\tCuspidal dimensions add up OK at level "<<n<<endl;
+      {
+        //cout<<"\tCuspidal dimensions add up OK at level "<<n<<endl;
+      }
     else
-      cout<<"\t****************Cuspidal dimensions inconsistent for level "<<n<<" ***************"<<endl;
+      {
+        cout<<"\t****************Cuspidal dimensions inconsistent for level "<<n<<" ***************"<<endl;
+      }
   }
   cout<<endl;
   //  stop_time();
