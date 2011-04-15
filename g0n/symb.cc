@@ -227,7 +227,7 @@ vector<long> symbdata::index2_with_pm(long c, long d) const {
 	// Case 1: (c,d) ~ (c',1)
 	if (kd>0) {               // d invertible, with inverse kd
 		ans[0] = reduce(xmodmul(c,kd,modulus));     // (c:d) = (c*kd:1)
-		ans[1] = chi[kd];
+		ans[1] = chi(kd);
 		return ans;
 	}
 	else { 
@@ -236,7 +236,7 @@ vector<long> symbdata::index2_with_pm(long c, long d) const {
 		// Case 2: (c,d) ~ (1, d')  with d' not a unit (mod N)
 		if (kc>0) {              // (c:d) = (1:kc*d) if c invertible
 			ans[0] = modulus-code(xmodmul(kc,d,modulus));
-			ans[1] = chi[kc];
+			ans[1] = chi(kc);
 			return ans;
 		}
 
@@ -266,13 +266,13 @@ vector<long> symbdata::index2_with_pm(long c, long d) const {
 			
 			// Make the scaling factor so that u*(c,d)/g = (c', d') is a distinguished representative
 			long u = reduce(xmodmul(long(aa),new_s.dee(),modulus) - xmodmul(long(-bb),new_s.cee(),modulus));			
-			ans[1] = chi[u]*chi[g];
+			ans[1] = chi(u*g);
 
                         // Diagnostic output:
 			//cout << " u = " << u << endl;
 			//cout << " g = " << g << endl;
-			//cout << " chi[u] = " << chi[u] << endl;
-			//cout << " chi[g] = " << chi[g] << endl;
+			//cout << " chi(u) = " << chi(u) << endl;
+			//cout << " chi(g) = " << chi(g) << endl;
 
 			// SANITY CHECK: Check that uc - c' and ud - d' are zero mod N
 			if ((u*c - g*new_s.cee()) % modulus != 0) {

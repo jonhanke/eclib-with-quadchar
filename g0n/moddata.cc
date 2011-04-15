@@ -180,12 +180,36 @@ void moddata::init_quadchar(long chi_d)
 	}
 	
 	// Initialize the table of values for the character chi (modulo the level, not the conductor!)
-	for (long i=0; i<modulus; i++) {
-		chi.push_back(kronecker(chi_d, i)); 
-	}
+        u = 0;
+        gamma_u.resize(4);
+        if (chi_d==1) // trivial character
+          {
+            for (long i=0; i<modulus; i++) {
+              chi_table.push_back(1);
+            }
+            gamma_u[0] = 1; gamma_u[1] = 0;
+            gamma_u[2] = 0; gamma_u[3] = 1;
+          }
+        else 
+          {
+            for (long i=0; i<modulus; i++) {
+              chi_table.push_back(kronecker(chi_d, i)); 
+              if ((u==0) && (chi_table[i]==-1)) {u=i;}
+            }
+            long t,a,b;
+            t=bezout(modulus,u,a,b); // a*modulus+b*u=t=1
+            gamma_u[0] = b;       gamma_u[3] = -a;
+            gamma_u[2] = modulus; gamma_u[3] = u;
+          }
 
 }
 
+// return the value chi(r)
+long moddata::chi(long res) const
+{
+  if (chi_top==1) return 1;  // trivial character shortcut
+  return chi_table[reduce(res)];
+}
 
 
 
@@ -193,7 +217,7 @@ void moddata::init_quadchar(long chi_d)
 
 void moddata::display_chitable() const
 {
- if (chi_top!=1) cout << "chi table: "<< chi << endl;
+ if (chi_top!=1) cout << "chi table: "<< chi_table << endl;
  else cout << "trivial character"<<endl;
 }
 

@@ -21,9 +21,9 @@
 // 
 //////////////////////////////////////////////////////////////////////////
 
+#include "svector.h"
 class mat22;  // fully defined below
 class matop;  // fully defined below
-#include "svector.h"
 
 class homspace :public symbdata {
   //private:
@@ -71,16 +71,16 @@ public:
   // The next functions express M- & modular symbols in terms of the
   // basis for H_1(X_0(N);cusps;Z) of dimension rk
   svec chain(const symb& s) const;
-  void add_chain(svec& v, const symb& s, int pm=1) const;
+  void add_chain(svec& v, const symb& s) const;
   svec chaincd(long c, long d) const;
-  void add_chaincd(svec& v, long c, long d, int pm=1) const;
+  void add_chaincd(svec& v, long c, long d) const;
 
   svec chain(long nn, long dd) const;
   svec chain(const rational& r) const 
   {return chain(num(r),den(r));}
-  void add_chain(svec& v, long nn, long dd, int pm=1) const;
-  void add_chain(svec& v, const rational& r, int pm=1) const 
-  {add_chain(v,num(r),den(r),pm);}
+  void add_chain(svec& v, long nn, long dd) const;
+  void add_chain(svec& v, const rational& r) const 
+  {add_chain(v,num(r),den(r));}
 
   // The next functions express M- & modular symbols in terms of the
   // basis of a (dual) subspace of the whole space
@@ -196,15 +196,13 @@ public:
 class matop {  // formal sum of 2x2 matrices
 private: 
 	vector<mat22> mats;
-	vector<int> signs;
 public: 
   matop(long p, const moddata *N);   // constructor for hecke ops
   matop(long p);           // constructor for heilbronn matrices
   matop(long a, long b, long c, long d);  // constructor for a single matrix
   long size() const {return mats.size();}
   mat22 operator[](long i) const {return mats[i];}
-  int sign(long i) const { return signs[i];}   // This gives the signs!
-	friend matop degen_mat(long d);
+  friend matop degen_mat(long d);
 };
 
 inline matop degen_mat(long d)
@@ -217,3 +215,4 @@ inline ostream& operator<< (ostream& s, const mat22& m)
    m.show(s);
    return s;
 }  
+
