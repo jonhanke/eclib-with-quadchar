@@ -649,7 +649,7 @@ void newforms::makeh1(int s)
       if(!h1plus)
 	{
 	  if(verbose) cout<<"Constructing H1 (with sign=+1) ..."<<flush;
-	  h1plus = new homspace(modulus,1,0,0 /*verbose*/);
+	  h1plus = new homspace(modulus,char_top,1,0,0 /*verbose*/);
 	  if(verbose) cout<<"done"<<endl;
 	}
       h1 = h1plus;
@@ -660,7 +660,7 @@ void newforms::makeh1(int s)
       if(!h1minus)
 	{
 	  if(verbose) cout<<"Constructing H1 (with sign=-1) ..."<<flush;
-	  h1minus = new homspace(modulus,-1,0,0 /*verbose*/);
+	  h1minus = new homspace(modulus,char_top,-1,0,0 /*verbose*/);
 	  if(verbose) cout<<"done"<<endl;
 	}
       h1 = h1minus;
@@ -671,7 +671,7 @@ void newforms::makeh1(int s)
       if(!h1full)
 	{
 	  if(verbose) cout<<"Constructing H1 (with sign=0) ..."<<flush;
-	  h1full = new homspace(modulus,0,0,0 /*verbose*/);
+	  h1full = new homspace(modulus,char_top,0,0,0 /*verbose*/);
 	  if(verbose) cout<<"done"<<endl;
 	}
       h1 = h1full;

@@ -61,7 +61,7 @@ void oldforms::getoldclasses(long d, int verbose)
   if ((d>10) && (n>d))
     {
       if(verbose) cout << "Getting oldclasses for divisor M = " << d << "\n";
-      newforms olddata(d,verbose);
+      newforms olddata(d,1,verbose);
       olddata.createfromdata(1,25,1);
       long nforms=olddata.n1ds;
       if(nforms==0) return;
