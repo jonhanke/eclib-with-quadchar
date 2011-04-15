@@ -56,6 +56,7 @@ public:
   long nsymb;
  moddata(long n, long chi_d=1);                                //constructor
  void init_quadchar(long chi_d);   // Initialize the quadratic character
+ void display_chitable() const;
  void display() const;
  void abort(const char* mess) const 
   {

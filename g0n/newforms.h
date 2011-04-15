@@ -131,10 +131,11 @@ protected:
   int j0;                   // data used for ap computation
   std::set<long> jlist;
 public:
+  long char_top;
   long n1ds, j1ds;
   vector<newform> nflist;
-  newforms(long n, int disp) 
-    :level(n), verbose(disp), of(0), h1(0), h1plus(0), h1minus(0), h1full(0) {;}
+  newforms(long n, long c_top, int disp) 
+    :level(n), verbose(disp), of(0), h1(0), h1plus(0), h1minus(0), h1full(0), char_top(c_top) {;}
   ~newforms(void);
   void display(void) const;
   void display_modular_symbol_map(void) const;

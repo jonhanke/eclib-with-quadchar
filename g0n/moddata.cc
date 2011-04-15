@@ -155,7 +155,14 @@ void moddata::init_quadchar(long chi_d)
 		cout << "Error: The character discriminant is not = 0, 1 (mod 4)." << endl;
 		::abort();
 	}
-	if ((chi_modulus % 16 == 0) || (0 == 1)) {   // ***** FIX THIS TO ENSURE D IS SQUAREFREE AT ALL PRIMES p>2 *****
+        long e=4, odd_part=1;
+        if (chi_d!=0) 
+          {
+            e = val(2,chi_d);
+            odd_part = chi_d>>e;
+          }
+        int valid_discriminant = ((e==0)&&posmod(odd_part,4)==1) || ((e==2)&&posmod(odd_part,4)==3);
+        if ( !valid_discriminant) {
 		cout << "Error: The character discriminant has prime power factors (not dividing 8)." << endl;
 		::abort();
 	}
@@ -177,17 +184,25 @@ void moddata::init_quadchar(long chi_d)
 		chi.push_back(kronecker(chi_d, i)); 
 	}
 
-	// Print the table of character values
-	cout << chi << endl;
-
 }
 
 
 
 
+// Print the table of character values
+
+void moddata::display_chitable() const
+{
+ if (chi_top!=1) cout << "chi table: "<< chi << endl;
+ else cout << "trivial character"<<endl;
+}
+
+// Print all the sotred technical info about the level
+
 void moddata::display() const
 {
  cout << "Level = " << modulus << "\n";
+ display_chitable();
  cout << "Number of symbols = " << nsymb << "\n";
  cout << ndivs << " non-trivial divisors: " << dlist << endl;
  cout << npdivs << " prime divisors: " << plist << endl;

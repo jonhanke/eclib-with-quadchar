@@ -32,7 +32,7 @@
 #include "cperiods.h"
 #include "newforms.h"
 
-#define AUTOLOOP
+//#define AUTOLOOP
 
 int main(void)
 {
@@ -40,6 +40,7 @@ int main(void)
  start_time();
  long n=110, stopp; 
  int output, verbose, sign=1, cuspidal=0;
+ long char_top=1;
 
  cout << "Program tmanin.  Using METHOD = " << METHOD << " to find newforms" << endl;
 #ifdef MODULAR
@@ -57,12 +58,13 @@ int main(void)
  while (n<limit) { n++;
 #else
      while (n>0) { cout<<"Enter level: "; cin>>n;
+		 cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
 #endif
  if (n>0)
 {
   cout << "\n>>>Level " << n;
   if(verbose)cout<<endl; else cout<< ":\t";
-  newforms nf(n,verbose); 
+  newforms nf(n,char_top,verbose); 
   int noldap=25;
   nf.createfromscratch(sign,noldap);
   if(verbose>1) nf.display();
