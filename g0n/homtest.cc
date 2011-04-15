@@ -49,7 +49,7 @@ int main(void)
   while (n<limit) { n++;
 #else
   while (n>0) { cout<<"Enter level: "; cin>>n;
-	  cout<<"Enter a quadratic character chi_top: "; cin>>char_top;
+    if(n>1) {cout<<"Enter a quadratic character chi_top: "; cin>>char_top;}
 #endif
  if (n>0)
 {

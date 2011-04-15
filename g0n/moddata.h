@@ -51,8 +51,11 @@ protected:
  vector<long> invlist,noninvlist,noninvdlist,dstarts,gcdtable,unitdivlist;
  long code(long res) const {return invlist[reduce(res)];}
 public:
-	long chi_top, chi_modulus;      // This is the top number and conductor of the quadratic character.
-	vector<long> chi;     // This stores the values of the quadratic character!
+  long chi_top, chi_modulus;      // This is the top number and conductor of the quadratic character.
+  vector<long> chi_table;         // This stores the values of the quadratic character!
+  long chi(long res) const;       // return the value chi(r)
+  long u;                         // A residue with chi(u)=-1, when chi is nontrivial
+  vector<long> gamma_u;           // Entries of a matrix [a,b;N,u] in Gamma_0(N)
   long nsymb;
  moddata(long n, long chi_d=1);                                //constructor
  void init_quadchar(long chi_d);   // Initialize the quadratic character

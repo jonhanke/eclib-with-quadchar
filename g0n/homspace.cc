@@ -43,19 +43,17 @@ matop::matop(long a, long b, long c, long d)
 
 matop::matop(long p, const moddata *N)
 {
-	long n = N->modulus;
-	int eps = N->chi[p % n];  // Ok since p is positive
+  long n = N->modulus;
+  int eps = N->chi(p);
 	
  if (p==n)
    {
-	   signs.push_back(1);
-	   mats.push_back(mat22(0,-1,n,0));
+     mats.push_back(mat22(0,-1,n,0));
      return;
    }
  if ((n%p)==0)   // W involution, 1 term
    {
-	 signs.push_back(1);	   
-	   long u,v,a,b;
+     long u,v,a,b;
       for (u=1, v=n; v%p==0; v/=p, u*=p) ;
       bezout(u,v,a,b);
       mats.push_back(mat22(u*a,-b,n,u));
@@ -63,15 +61,15 @@ matop::matop(long p, const moddata *N)
    }
  // else  Hecke operator, p+1 terms
   {
-	signs.resize(p+1);
     mats.resize(p+1);
     long j, p2 = p>>1; 
-	  for (j=0; j<p; j++) {
-		  signs[j] = 1;
-		  mats[j] = mat22(1,j-p2,0,p);
-	  }
-	signs[p] = eps;
-    mats[p] = mat22(p,0,0,1);
+    for (j=0; j<p; j++) {
+      mats[j] = mat22(1,j-p2,0,p);
+    }
+    if ((N->u)==0) // trivial char
+      mats[p] = mat22(p,0,0,1);
+    else
+      mats[p] = mat22(p*(N->gamma_u[0]),N->gamma_u[1],p*(N->gamma_u[2]),N->gamma_u[3]);
   }
 }
  
@@ -84,6 +82,15 @@ homspace::homspace(long n, long char_top, int hp, int hcusp, int verbose) :symbd
    plusflag=hp;
    cuspidal=hcusp;
    long i,j,k,k2,mk;
+   mat22 gamma_u;  // A matrix in Gamma_H not in Gamma_0(N) (for non-trivial character)
+   if (u==0) //  trivial char
+     gamma_u=mat22(1,0,0,1);
+   else      // nontrivial, chi(u)=-1
+     {
+       k = bezout(n,u,i,j); // n*i+u*j=k=1
+       gamma_u=mat22(j,-i,n,u);
+     }
+
    coordindex = new int[nsymb];  
    if (!coordindex) abort(string("coordindex").c_str());
    int* check = new int[nsymb];  
@@ -573,83 +580,83 @@ vec homspace::contract_coords(const vec& v)
 svec homspace::chain(const symb& s) const
 {
  vector<long> V = index_with_pm(s);
-	int eps = V[1];
-	long i = coordindex[V[0]];
+ int eps = V[1];
+ long i = coordindex[V[0]];
  if (i>0) return  eps * coord_vecs[i];
  if (i<0) return -eps * coord_vecs[-i];
  return svec(rk);
 }
 
-void homspace::add_chain(svec& v, const symb& s, int pm) const
+void homspace::add_chain(svec& v, const symb& s) const
 {
-	vector<long> V = index_with_pm(s);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) {v += (pm * eps) * coord_vecs[i]; return;}
- if (i<0) {v -= (pm * eps) * coord_vecs[-i]; return;}
+  vector<long> V = index_with_pm(s);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) {v += (eps) * coord_vecs[i]; return;}
+  if (i<0) {v -= (eps) * coord_vecs[-i]; return;}
 }
 
 vec homspace::projchaincd(long c, long d, const mat& m) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) return  eps * m.row(i);
- if (i<0) return -eps * m.row(-i);
- return vec(ncols(m));
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) return  eps * m.row(i);
+  if (i<0) return -eps * m.row(-i);
+  return vec(ncols(m));
 }
 
 long homspace::nfprojchaincd(long c, long d, const vec& bas) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) return  eps * bas[i];
- if (i<0) return -eps * bas[-i];
- return 0;
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) return  eps * bas[i];
+  if (i<0) return -eps * bas[-i];
+  return 0;
 }
 
 svec homspace::chaincd(long c, long d) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) return  eps * coord_vecs[i];
- if (i<0) return -eps * coord_vecs[-i];
- return svec(rk);
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) return  eps * coord_vecs[i];
+  if (i<0) return -eps * coord_vecs[-i];
+  return svec(rk);
 }
 
 void homspace::add_projchaincd(vec& v, long c, long d, const mat& m) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
-	if (eps > 0){
-		if (i>0) {add_row_to_vec(v,m,i); return;}
-		if (i<0) {sub_row_to_vec(v,m,-i); return;}
-	}
-	else {
-		if (i>0) {sub_row_to_vec(v,m,i); return;}
-		if (i<0) {add_row_to_vec(v,m,-i); return;}
-	}		
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (eps > 0){
+    if (i>0) {add_row_to_vec(v,m,i); return;}
+    if (i<0) {sub_row_to_vec(v,m,-i); return;}
+  }
+  else {
+    if (i>0) {sub_row_to_vec(v,m,i); return;}
+    if (i<0) {add_row_to_vec(v,m,-i); return;}
+  }		
 }
 
 void homspace::add_nfprojchaincd(long& a, long c, long d, const vec& bas) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) {a += eps * bas[i]; return;}
- if (i<0) {a -= eps * bas[-i]; return;}
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) {a += eps * bas[i]; return;}
+  if (i<0) {a -= eps * bas[-i]; return;}
 }
 
-void homspace::add_chaincd(svec& v, long c, long d, int pm) const 
+void homspace::add_chaincd(svec& v, long c, long d) const 
 {
-	vector<long> V = index2_with_pm(c,d);
-	int eps = V[1];
-	long i = coordindex[V[0]];
- if (i>0) {v += (pm * eps) * coord_vecs[i]; return;}
- if (i<0) {v -= (pm * eps) * coord_vecs[-i]; return;}
+  vector<long> V = index2_with_pm(c,d);
+  int eps = V[1];
+  long i = coordindex[V[0]];
+  if (i>0) {v += (eps) * coord_vecs[i]; return;}
+  if (i<0) {v -= (eps) * coord_vecs[-i]; return;}
 }
 
 	
@@ -669,15 +676,15 @@ svec homspace::chain(long nn, long dd) const
    return ans;
 }
 
-void homspace::add_chain(svec& v, long nn, long dd, int pm) const
+void homspace::add_chain(svec& v, long nn, long dd) const
 {
-   add_chaincd(v,0,1,pm);
+   add_chaincd(v,0,1);
    long c=0, d=1, e, a=nn, b=dd, q, f;
    while (b)
    { q=a/b; 
      f=a; a=-b; b= f-q*b; 
      e=d; d= c; c=(-q*c-e)%modulus;
-     add_chaincd(v,c,d,pm);
+     add_chaincd(v,c,d);
    }
 }
 
@@ -733,7 +740,7 @@ void homspace::add_nfprojchain(long& aa, long nn, long dd, const vec& bas) const
 
 svec homspace::applyop(const matop& mlist, const rational& q) const
 { svec ans(rk);  long i=mlist.size();
-  while (i--) add_chain(ans,mlist[i](q),mlist.sign(i));   // This now uses the internal list of signs!
+  while (i--) add_chain(ans,mlist[i](q));
   return ans;
 }
  
@@ -1119,15 +1126,15 @@ vec homspace::maninvector(long p) const
   if (plusflag!=-1) 
     {
       if (p==2) 
-	add_chain(tvec,1,2,1); 
+	add_chain(tvec,1,2); 
       else
 	{ 
 	  p2=(p-1)>>1;
-	  for (i=1; i<=p2; i++) { add_chain(tvec,i,p,1); }
+	  for (i=1; i<=p2; i++) { add_chain(tvec,i,p); }
 	  if(plusflag)   
 	    tvec *=2;
 	  else
-	    for (i=1; i<=p2; i++) { add_chain(tvec,-i,p,1); }
+	    for (i=1; i<=p2; i++) { add_chain(tvec,-i,p); }
 	}
     }
   if(cuspidal) 
