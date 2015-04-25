@@ -1,0 +1,1 @@
+This is an extension/enhancement of John Cremona's ECLIB C++ programs to allow one to compute systems of Hecke eigenvalues for weight 2 modular forms for Gamma\_0(N) and any primitive even quadratic character chi.  The character is defined by specifying the numerator chi\_top of the Kronecker symbol, i.e. chi(d) := (chi\_top/d).
